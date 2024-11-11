@@ -1,0 +1,91 @@
+name: Auto-Trigger-AWS-EC2
+on: 
+  workflow_dispatch:
+jobs:
+
+  launch-runner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: iterative/setup-cml@v2
+
+      - name: Deploy runner on AWS EC2 
+        env:
+          REPO_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          cml runner launch \
+          --cloud=aws \
+          --name=session-08 \
+          --cloud-region=ap-south-1 \
+          --cloud-type=g4dn.xlarge \
+          --cloud-hdd-size=64 \
+          --cloud-spot \
+          --single \
+          --labels=cml-gpu \
+          --idle-timeout=100
+
+  train-and-report:
+    runs-on: [self-hosted, cml-gpu]
+    timeout-minutes: 10 # job gets cancelled if it runs for more than 10 minutes
+    # if you want you can specify the container
+    # container:
+    #   image: docker://pytorch/pytorch:2.4.0-cuda12.4-cudnn9-runtime
+    #   options: --gpus all
+    steps:
+
+      - name: Verify EC2 Instance
+        run: |
+          echo "Checking instance information..."
+          # Check if we're on EC2
+          TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+          curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-type
+          
+          echo "Checking system resources..."
+          lscpu
+          free -h
+          df -h
+          nvidia-smi  # This will show GPU if available
+          
+          echo "Checking environment..."
+          env | grep AWS || true
+          hostname
+          whoami
+          pwd
+          # Install the AWS CLI if not already available
+          if ! command -v aws &> /dev/null; then
+            apt-get update
+            apt-get install -y awscli
+          fi
+
+      - name: Set up AWS CLI credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-south-1  # Change to your desired region
+        run: |
+          # Create the AWS config and credentials files
+          mkdir -p ~/.aws
+          echo "[default]" > ~/.aws/config
+          echo "region=${AWS_DEFAULT_REGION}" >> ~/.aws/config
+          echo "[default]" > ~/.aws/credentials
+          echo "aws_access_key_id=${AWS_ACCESS_KEY_ID}" >> ~/.aws/credentials
+          echo "aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}" >> ~/.aws/credentials
+
+      - name: Test AWS CLI
+        run: |
+          # Now you can run any AWS CLI command
+          aws s3 ls  # Example command to list S3 buckets
+
+      - name: Pull Docker image from docker hub
+        run: |
+          docker pull hello-world
+
+      - name: Run Docker image
+        run: |
+          docker run hello-world
+
+      - name: Clean previous images and containers
+        run: |
+          docker system prune -f
