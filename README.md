@@ -1,6 +1,17 @@
 ### Auto-Trigger-AWS-EC2-with-GPU
 
-### Request AWS Spot instance (optional)
+**Contents**
+
+1. [Request AWS Spot Instance](#request-aws-spot-instance)
+2. [Credentials Configuration](#credentials-configuration)
+3. [Github Workflow](#github-workflow)
+4. [Reference](#reference)
+
+
+### Request AWS Spot Instance
+
+*Note: This spot request is optional you can trigger cml launcher even without this spot instance type*
+
 - Since spot instance is budget friendly i am explaining this blog with spot instance example
 
 - Go to Searvice Quota -> AWS Services -> Amazon Elastic Compute Client(Amazon Ec2)
@@ -50,28 +61,50 @@ Note: We can create roles or policies and proceed for specific permission I didn
 
     ![request_limit](./assets/snap_after_entering.png)
 
-**Github Workflow**
+### Github Workflow
 
 There are many tools to start and stop AWS instances and services.
 
-We are going to use [cml-runner](https://github.com/iterative/setup-cml?tab=readme-ov-file#setup-cml-action) to trigger EC2 spot instance. Below is the trigger command.
+- We are going to use [cml-runner](https://github.com/iterative/setup-cml?tab=readme-ov-file#setup-cml-action) to trigger EC2 spot instance. Below is the trigger command.
 
 ```
 cml runner launch --cloud=aws --name=session-08 \
     --cloud-region=ap-south-1 --cloud-type=g4dn.xlarge --cloud-hdd-size=64 \
     --cloud-spot --single --labels=cml-gpu --idle-timeout=100
 ```
+
 `--idle-timeout=100` means after 100 seconds of idle time the instance shuts down
 
-#todo instance starts
+**Instance starts**
 
-- With some verification methods `http://169.254.169.254/latest/meta-data/instance-type` we can confirm if we had triggered the similar instance and if GPU is also attached to it. todo link
+![request_limit](./assets/snap_trigger_ec2_spot.png)
 
-- Since aws cli is not installed by default as we are not using specific CLI we can instance aws cli manually and configure.
+![request_limit](./assets/snap_spot_proof.png)
+
+- With some verification methods `http://169.254.169.254/latest/meta-data/instance-type` we can confirm if we had triggered the similar instance and if GPU is also attached to it. You can see that its a g4dn.xlarge instance
+
+![request_limit](./assets/snap_verify_instance.png)
 
 
-#todo cli runs
+- Since aws cli is not installed by default as we are not using specific CLI we can instance aws cli manually and configure. Refer workflow file for it
 
-- After execution and `timeout-minutes: 10 minutes` the instance shutsdown and terminates automatically.
 
-#todo instance shuts down
+- After worflow execution by 100 seconds the EC2 instance shutdown and after complete shutdown within 5 minutes spot request also gets close. 
+
+- Note: Ensure your spot request also closes properly else it may restart your instance again due to improper setting.
+
+**EC2 shutdown**
+
+![request_limit](./assets/snap_ec2_shutdown.png)
+
+**Spot request shutdown**
+
+![request_limit](./assets/snap_spot_request_shut_down.png)
+
+Job Run link - [here](https://github.com/ajithvcoder/autotrigger-aws-ec2-with-githubactions/actions/runs/11777520687/job/32802085220)
+
+### Reference
+
+1. [cml-example-cloud-gpu](https://github.com/iterative-test/cml-example-cloud-gpu)
+2. [cml-runner](https://cml.dev/doc/ref/runner)
+3. [cml-repo-setup](https://github.com/iterative/setup-cml?tab=readme-ov-file#setup-cml-action)
