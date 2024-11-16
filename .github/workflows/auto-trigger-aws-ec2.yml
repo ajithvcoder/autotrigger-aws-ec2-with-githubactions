@@ -1,6 +1,10 @@
 name: Auto-Trigger-AWS-EC2
 on: 
   workflow_dispatch:
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
 jobs:
 
   launch-runner:
@@ -19,7 +23,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          cml runner launch \
+          cml runner --cloud-metadata="actions_link=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+          --cloud-startup-script=$(echo 'curl https://github.com/${{ github.actor }}.keys >> /home/ubuntu/.ssh/authorized_keys' | base64 -w 0)  \
           --single \
           --labels=aws-test --cloud=aws --cloud-image="amazon/Deep Learning ARM64 AMI OSS Nvidia Driver GPU PyTorch 2.4.0 (Ubuntu 22.04) 20241101" --cloud-region=ap-south-1 \
           --cloud-type=g4dn.xlarge --cloud-hdd-size=64 --cloud-spot --idle-timeout=1500 --name cml-test-001
