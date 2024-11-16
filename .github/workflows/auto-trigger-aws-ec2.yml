@@ -19,7 +19,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          cml runner \
+          cml runner launch \
           --single \
           --labels=aws-test --cloud=aws --cloud-image="ami-009761097133eb6de" --cloud-region=ap-south-1 \
           --cloud-type=g4dn.xlarge --cloud-hdd-size=64 --cloud-spot --idle-timeout=100 --name cml-test-001
