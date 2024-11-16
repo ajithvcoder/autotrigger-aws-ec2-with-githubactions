@@ -21,7 +21,7 @@ jobs:
         run: |
           cml runner launch \
           --single \
-          --labels=aws-test --cloud=aws --cloud-image="ami-009761097133eb6de" --cloud-region=ap-south-1 \
+          --labels=aws-test --cloud=aws --cloud-image=ami-096ae61a2f31242c2 --cloud-region=ap-south-1 \
           --cloud-type=g4dn.xlarge --cloud-hdd-size=64 --cloud-spot --idle-timeout=100 --name cml-test-001
 
   train-and-report:
