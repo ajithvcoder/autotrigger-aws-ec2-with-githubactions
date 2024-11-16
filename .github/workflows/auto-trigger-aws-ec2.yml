@@ -21,8 +21,8 @@ jobs:
         run: |
           cml runner launch \
           --single \
-          --labels=aws-test --cloud=aws --cloud-image=ami-096ae61a2f31242c2 --cloud-region=ap-south-1 \
-          --cloud-type=g4dn.xlarge --cloud-hdd-size=64 --cloud-spot --idle-timeout=100 --name cml-test-001
+          --labels=aws-test --cloud=aws --cloud-image="amazon/Deep Learning ARM64 AMI OSS Nvidia Driver GPU PyTorch 2.4.0 (Ubuntu 22.04) 20241101" --cloud-region=ap-south-1 \
+          --cloud-type=g4dn.xlarge --cloud-hdd-size=64 --cloud-spot --idle-timeout=1500 --name cml-test-001
 
   train-and-report:
     runs-on: [self-hosted, aws-test]
